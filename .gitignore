@@ -4,3 +4,4 @@
 /node_modules
 /assets/*/**
 !/assets/.gitkeep
+package-lock.json
