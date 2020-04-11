@@ -48,6 +48,7 @@ class Theme_Support {
 		);
 	}
 
+
 	/**
 	 * Register supported menus
 	 *
