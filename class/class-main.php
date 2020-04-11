@@ -83,6 +83,6 @@ class Main {
 		}
 
 		require_once $realpath;
-		$this->instances[ $as ] = new $ns_class();
+		$this->instances[ $as ] = new $ns_class( $this );
 	}
 }
