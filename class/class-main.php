@@ -11,7 +11,7 @@ namespace MinimalMDTheme;
 
 class Main {
 	private static $instance;
-	private $instances;
+	private static $instances;
 
 	public $uri;
 
@@ -41,6 +41,7 @@ class Main {
 		$this->instances = array();
 
 		$this->load_instance( 'ThemeSupport', 'Theme_Support' );
+		$this->load_instance( 'Icons', 'SVG_Icons' );
 	}
 
 
@@ -51,12 +52,12 @@ class Main {
 	 * @param string $class
 	 * @return object
 	 */
-	public function get( string $class ) {
-		if ( ! isset( $this->instances[ $class ] ) ) {
+	public static function get( string $class ) {
+		if ( ! isset( self::$instances[ $class ] ) ) {
 			throw new \Exception( 'Invalid class: ' . $class );
 		}
 
-		return $this->instances[ $class ];
+		return self::$instances[ $class ];
 	}
 
 
@@ -83,6 +84,6 @@ class Main {
 		}
 
 		require_once $realpath;
-		$this->instances[ $as ] = new $ns_class( $this );
+		self::$instances[ $as ] = new $ns_class( $this );
 	}
 }
