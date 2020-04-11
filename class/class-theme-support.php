@@ -2,7 +2,8 @@
 /**
  * Theme support setup Class.
  *
- * Indicates to WordPress what features does this theme support.
+ * Indicates to WordPress what features does this theme support and registers
+ * other utilities such as menus.
  *
  * @package WordPress
  * @subpackage minimal-md-theme
@@ -12,18 +13,6 @@
 namespace MinimalMDTheme;
 
 class Theme_Support {
-	private $supports = array(
-		'post-thumbnails',
-		'custom-logo',
-		'html5' => array(
-			'comment-list',
-			'comment-form',
-			'search-form',
-			'gallery',
-			'caption',
-		),
-	);
-
 	/**
 	 * Load theme support on instance
 	 *
@@ -40,8 +29,17 @@ class Theme_Support {
 	 * @return void
 	 */
 	public function setup_support() {
-		foreach ( $this->supports as $key => $value ) {
-			add_theme_support( $key, $value );
-		}
+		add_theme_support( 'post-thumbnails' );
+		add_theme_support( 'custom-logo' );
+		add_theme_support(
+			'html5',
+			array(
+				'comment-list',
+				'comment-form',
+				'search-form',
+				'gallery',
+				'caption',
+			)
+		);
 	}
 }
