@@ -13,18 +13,23 @@
 namespace MinimalMDTheme;
 
 class Theme_Support {
+	protected $parent;
+
 	/**
 	 * Load theme support on instance
 	 *
 	 * @return void
 	 */
-	public function construct() {
+	public function construct( &$parent ) {
+		$this->parent = &$parent;
+
 		add_action( 'after_setup_theme', array( $this, 'setup_support' ) );
+		add_action( 'after_setup_theme', array( $this, 'setup_menus' ) );
 	}
 
 
 	/**
-	 * Get theme support and indicate it to WordPress.
+	 * Register theme support.
 	 *
 	 * @return void
 	 */
@@ -39,6 +44,20 @@ class Theme_Support {
 				'search-form',
 				'gallery',
 				'caption',
+			)
+		);
+	}
+
+	/**
+	 * Register supported menus
+	 *
+	 * @return void
+	 */
+	public function setup_menus() {
+		register_nav_menus(
+			array(
+				'header-menu' => __( 'Header Menu', 'minimal-md-theme' ),
+				'footer-menu' => __( 'Footer Menu', 'minimal-md-theme' ),
 			)
 		);
 	}
