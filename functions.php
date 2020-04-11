@@ -11,5 +11,5 @@
 
 defined( 'ABSPATH' ) || exit;
 
-
-require_once 'inc/support.php';
+require_once 'class/class-main.php';
+MinimalMDTheme\Main::get_instance();
