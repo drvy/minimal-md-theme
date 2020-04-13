@@ -10,7 +10,6 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-
 ?>
 </div>
 
