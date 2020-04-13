@@ -1,156 +1,168 @@
-require('dotenv').config();
+const settings = {
+    project: 'minimal-md-theme',
 
-const config    = require('./.config');
-let gulp        = require('gulp');
-let plugins     = require('gulp-load-plugins')();
-let browserSync = require('browser-sync').create();
-
-var sassLintHandler = error => {
-    plugins.notify.onError({
-        title: 'SCSS Linter failed!',
-        message: '<%= error.message %>'
-    })(error);
-
-    this.emit('end');
+    scripts: true,
+    styles: true,
+    svgs: true,
+    images: true,
+    fonts: true,
 };
 
-var buildSass = env => {
-    return gulp.src(config.sassPath + '/**/*.scss')
-        .pipe(plugins.sassLint({ config: '.sass-lint.yml' }))
-        .pipe(plugins.sassLint.format())
-        .pipe(plugins.plumber({ errorHandler: sassLintHandler }))
-        .pipe(plugins.sassLint.failOnError())
-        .pipe(plugins.plumber.stop())
-        .pipe(plugins.sass({
-            outputStyle: env === 'production' ? 'compressed' : 'expanded',
-            includePaths:[
-                ...config.vendor.sass,
-                config.sassPath,
-            ],
+const paths = {
+    input: 'src/',
+    output: 'assets/',
+
+    scripts: {
+        input: 'js/**/*.js',
+        output: 'js/',
+        minFile: settings.project + '.min.js'
+    },
+
+    styles: {
+        input: 'scss/**/*.scss',
+        output: 'css/',
+    },
+
+    svgs: {
+        input: 'svg/*.svg',
+        output: 'images/'
+    },
+
+    images: {
+        input: 'images/**/*',
+        output: 'images/'
+    },
+
+    fonts: {
+        input: 'fonts/**/*',
+        output: 'fonts/'
+    }
+};
+
+var {task, src, dest, watch, series, parallel} = require('gulp');
+
+var del        = require('del');
+var rename     = require('gulp-rename');
+var optimizejs = require('gulp-optimize-js');
+var sass       = require('gulp-sass');
+var sassLint   = require('gulp-sass-lint');
+var postcss    = require('gulp-postcss');
+var svgmin     = require('gulp-svgmin');
+var concat     = require('gulp-concat');
+var uglify     = require('gulp-terser');
+var jshint     = require('gulp-jshint');
+var stylish    = require('jshint-stylish');
+var prefix     = require('autoprefixer');
+
+let cleanAssets = function(done) {
+    del.sync([ paths.output ]);
+    return done();
+};
+
+let buildStyles = function(done) {
+    if (!settings.styles) {
+        return done();
+    }
+
+    return src(paths.input + paths.styles.input)
+        .pipe(sassLint())
+        .pipe(sassLint.format())
+        .pipe(sass({
+            outputStyle: 'compressed',
+            sourceComments: false,
             errLogToConsole: true
-        }).on('error', plugins.notify.onError(error => {
-            return `Error: ${error.message}`
-        })))
-        .pipe(plugins.autoprefixer('last 10 version'))
-        .pipe(gulp.dest( config.destPath + '/css' ))
-        .pipe(browserSync.stream());
+        }))
+        .pipe(postcss([
+            prefix({
+                cascade: true,
+                remove: true
+            })
+        ]))
+        .pipe(dest(paths.output + paths.styles.output));
 };
 
-gulp.task('buildDev:sass', () => {
-    return buildSass(process.env.NODE_ENV);
-});
+let buildScripts = function(done) {
+    if (!settings.scripts) {
+        return done();
+    }
 
-gulp.task('build:sass', () => {
-    return buildSass('production');
-});
+    return src(paths.input + paths.scripts.input)
+        .pipe(jshint({ 'esversion': 6 }))
+        .pipe(jshint.reporter('jshint-stylish'))
+        .pipe(concat(paths.scripts.minFile))
+        .pipe(optimizejs())
+        .pipe(dest(paths.output + paths.scripts.output))
+        .pipe(rename(paths.scripts.minFile))
+        .pipe(uglify({
+            mangle: {
+                toplevel: true
+            }
+        }))
+        .pipe(optimizejs())
+        .pipe(dest(paths.output + paths.scripts.output));
+};
 
-gulp.task('build:javascript', () => {
-    return gulp.src([
-        ...config.vendor.js,
-        config.jsPath + '/vendor/**/*.js',
-        config.jsPath + '/**/_*.js',
-        config.jsPath + '/**/*.js',
-        config.jsPath + '/_*.js',
-        config.jsPath + '/*.js',
-    ])
-    .pipe(plugins.concat(config.jsName))
-    .pipe(gulp.dest(config.destPath + '/js'))
-    .pipe(plugins.rename(config.jsNameMin))
-    .pipe(plugins.uglify({ mangle: {toplevel: true} }))
-    .pipe(gulp.dest(config.destPath + '/js'));
-});
+let buildSVGs = function(done) {
+    if (!settings.svgs) {
+        return done();
+    }
 
-gulp.task('build:javascriptadmin', () => {
-    return gulp.src([
-        config.jsAdminPath + '/**/_*.js',
-        config.jsAdminPath + '/**/*.js',
-        config.jsAdminPath + '/_*.js',
-        config.jsAdminPath + '/*.js',
-    ])
-    .pipe(plugins.concat('admin.js'))
-    .pipe(gulp.dest(config.destPath + '/js'))
-    .pipe(plugins.rename('admin.min.js'))
-    .pipe(plugins.uglify({ mangle: {toplevel: true} }))
-    .pipe(gulp.dest(config.destPath + '/js'));
-});
+    return src(paths.input + paths.svgs.input)
+        .pipe(svgmin())
+        .pipe(dest(paths.output + paths.svgs.output))
+};
 
-gulp.task('build:vendor', () => {
-    return gulp.src([
-        config.vendorPath + '/**/*',
-    ])
-    .pipe(gulp.dest( config.destPath + '/vendor' ));
-});
+let buildImages = function(done) {
+    if (!settings.images) {
+        return done();
+    }
 
-gulp.task('build:image', () => {
-    return gulp.src([
-        config.imgPath + '/**/*'
-    ])
-    .pipe(gulp.dest( config.destPath + '/images' ));
-});
+    return src(paths.input + paths.images.input)
+        .pipe(dest(paths.output + paths.images.output))
+};
 
-gulp.task('build:fonts', () => {
-    return gulp.src([
-        ...config.vendor.fonts,
-        config.fontPath + '/**/*'
-    ])
-    .pipe(gulp.dest( config.destPath + '/fonts' ));
-});
+let buildFonts = function(done) {
+    if (!settings.fonts) {
+        return done();
+    }
 
-gulp.task('clean', () => {
-    return gulp.src(
-        [
-            config.destPath
-        ],
-        {
-            read: false,
-            allowEmpty: true
-        }
-    )
-    .pipe(plugins.clean());
-});
+    return src(paths.input + paths.fonts.input)
+        .pipe(dest(paths.output + paths.fonts.output))
+};
 
-gulp.task('watch', () => {
-    browserSync.init({
-      files: [
-          '{inc,template-parts}/**/*.php',
-          '*.php',
-          config.destPath + '**/*'
-        ],
-      proxy: config.devUrl,
-      snippetOptions: {
-        whitelist: ['/wp-admin/admin-ajax.php'],
-        blacklist: ['/wp-admin/**']
-      }
-    });
-    gulp.watch(config.sassPath + '/**/*.scss', gulp.series('buildDev:sass'));
-    gulp.watch(config.jsPath + '/**/*.js', gulp.series('build:javascript'));
-    gulp.watch(config.jsAdminPath + '/**/*.js', gulp.series('build:javascriptadmin'));
-    gulp.watch(config.imgPath + '/**/*', gulp.series('build:image'));
-    gulp.watch(config.fontPath + '/**/*', gulp.series('build:fonts'));
-    gulp.watch(config.vendorPath + '/**/*', gulp.series('build:vendor'));
-    gulp.watch(config.destPath + "/**/{*.css,*.js}").on('change', browserSync.reload);
-});
+let watchSource = function() {
+    watch(paths.input + paths.styles.input,  series(BuildStyles));
+    watch(paths.input + paths.scripts.input, series(BuildScripts));
+    watch(paths.input + paths.svgs.input,    series(buildSVGs));
+    watch(paths.input + paths.images.input,  series(buildImages));
+    watch(paths.input + paths.fonts.input,   series(buildFonts));
+};
 
-gulp.task('build:watch', gulp.series(
-    'build:javascriptadmin',
-    'buildDev:sass',
-    'build:fonts',
-    'build:javascript',
-    'build:image',
-    'build:vendor',
-    'watch'
+task('clean',       cleanAssets);
+task('build::css',  buildStyles);
+task('build::js',   buildScripts);
+task('build::svg',  buildSVGs);
+task('build::font', buildFonts);
+task('build::img',  buildImages);
+
+task('watch', series(
+    buildStyles,
+    buildScripts,
+    buildSVGs,
+    buildImages,
+    buildFonts,
+    watchSource
 ));
 
-gulp.task('build', gulp.series(
-    'clean',
-    gulp.parallel(
-    'build:javascriptadmin',
-    'build:sass',
-        'build:fonts',
-        'build:javascript',
-        'build:image',
-        'build:vendor'
+task('build', series(
+    cleanAssets,
+    parallel(
+        buildStyles,
+        buildScripts,
+        buildSVGs,
+        buildImages,
+        buildFonts
     )
 ));
 
-gulp.task('default', gulp.series('build'));
+task('default', series('build'));

@@ -9,9 +9,9 @@
 
 namespace MinimalMDTheme;
 
-class Main {
+class Minimal_MD_Theme {
 	private static $instance;
-	private $instances;
+	private static $instances;
 
 	public $uri;
 
@@ -21,7 +21,7 @@ class Main {
 	 *
 	 * @return Minimal_MD_Theme
 	 */
-	public static function get_instance() {
+	public static function get_instance(): Minimal_MD_Theme {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
 			self::$instance->initialize();
@@ -36,11 +36,13 @@ class Main {
 	 *
 	 * @return void
 	 */
-	public function initialize() {
+	public function initialize(): void {
 		$this->uri       = trailingslashit( get_template_directory() );
 		$this->instances = array();
 
-		$this->load_instance( 'ThemeSupport', 'Theme_Support' );
+		$this->load_instance( 'Enqueues', 'Enqueues' );
+		$this->load_instance( 'Icons', 'SVG_Icons' );
+		$this->load_instance( 'Initialize', 'Initialize' );
 	}
 
 
@@ -51,12 +53,12 @@ class Main {
 	 * @param string $class
 	 * @return object
 	 */
-	public function get( string $class ) {
-		if ( ! isset( $this->instances[ $class ] ) ) {
+	public static function get( string $class ): object {
+		if ( ! isset( self::$instances[ $class ] ) ) {
 			throw new \Exception( 'Invalid class: ' . $class );
 		}
 
-		return $this->instances[ $class ];
+		return self::$instances[ $class ];
 	}
 
 
@@ -72,7 +74,7 @@ class Main {
 	 * @param string $class
 	 * @return void
 	 */
-	private function load_instance( string $as, string $class ) {
+	private function load_instance( string $as, string $class ): void {
 		$formated   = strtolower( str_replace( '_', '-', $class ) );
 		$ns_class   = __NAMESPACE__ . "\\{$class}";
 		$class_path = $this->uri . 'class/class-' . $formated . '.php';
@@ -83,6 +85,6 @@ class Main {
 		}
 
 		require_once $realpath;
-		$this->instances[ $as ] = new $ns_class();
+		self::$instances[ $as ] = new $ns_class( $this );
 	}
 }

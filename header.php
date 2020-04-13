@@ -21,6 +21,7 @@ defined( 'ABSPATH' ) || exit;
 </head>
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
+
 <div id="page" class="wrap site">
 	<a class="skip-link screen-reader-text" href="#content"><?php esc_html_e( 'Skip to content', 'minimal-md-theme' ); ?></a>
 
