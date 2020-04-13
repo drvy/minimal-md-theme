@@ -1,9 +1,9 @@
 <?php
 /**
- * Theme support setup Class.
+ * Class to initialize the theme.
  *
- * Indicates to WordPress what features does this theme support and registers
- * other utilities such as menus.
+ * Indicates to WordPress what features does this theme support, registers
+ * other utilities such as menus, enqueues styles and scripts.
  *
  * @package WordPress
  * @subpackage minimal-md-theme
@@ -12,19 +12,28 @@
 
 namespace MinimalMDTheme;
 
-class Theme_Support {
-	protected $parent;
+class Initialize {
+	private $parent;
 
 	/**
 	 * Load theme support on instance
 	 *
 	 * @return void
 	 */
-	public function construct( &$parent ) {
+	public function __construct( Minimal_MD_Theme &$parent ) {
 		$this->parent = &$parent;
+		add_action( 'after_setup_theme', array( $this, 'after_setup_theme' ) );
+	}
 
-		add_action( 'after_setup_theme', array( $this, 'setup_support' ) );
-		add_action( 'after_setup_theme', array( $this, 'setup_menus' ) );
+
+	/**
+	 * Execute after_setup_theme related hooks
+	 *
+	 * @return void
+	 */
+	public function after_setup_theme(): void {
+		$this->setup_support();
+		$this->setup_menus();
 	}
 
 
@@ -33,7 +42,7 @@ class Theme_Support {
 	 *
 	 * @return void
 	 */
-	public function setup_support() {
+	public function setup_support(): void {
 		add_theme_support( 'post-thumbnails' );
 		add_theme_support( 'custom-logo' );
 		add_theme_support(
@@ -54,7 +63,7 @@ class Theme_Support {
 	 *
 	 * @return void
 	 */
-	public function setup_menus() {
+	public function setup_menus(): void {
 		register_nav_menus(
 			array(
 				'header-menu' => __( 'Header Menu', 'minimal-md-theme' ),
